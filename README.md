@@ -73,9 +73,9 @@ C4Container
 | Base de Datos | SQL Server | Persistencia de usuarios, proyectos, revisiones y estados |
 | Gestor de Documentos | Almacenamiento de objetos | Archivos y evidencias del proyecto |
 
-### Diagramas de secuencia
+## Diagramas de secuencia
 
-## Registrar propuesta de proyecto
+### Registrar propuesta de proyecto
 
 ```mermaid
 sequenceDiagram
@@ -105,6 +105,45 @@ sequenceDiagram
         DB-->>A: Confirmación
         A-->>W: 201 Created + proyecto
         W-->>E: Mostrar número de proyecto
+    end
+    deactivate A
+```
+
+### Revision del tutor
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor T as Tutor
+    participant W as Aplicación Web
+    participant A as API REST
+    participant DB as SQL Server
+    participant M as Correo institucional
+
+    T->>W: Abre proyecto asignado
+    W->>A: GET /api/projects/{id} (Bearer token)
+    activate A
+    A->>DB: Consultar proyecto y documentos
+    DB-->>A: Datos del proyecto
+    A-->>W: 200 OK + JSON
+    deactivate A
+    W-->>T: Mostrar proyecto
+
+    T->>W: Registra observaciones
+    W->>A: POST /api/projects/{id}/reviews
+    activate A
+    A->>DB: Verificar que el tutor esté asignado al proyecto
+    DB-->>A: Resultado
+    alt Tutor no asignado
+        A-->>W: 403 Forbidden
+        W-->>T: Mostrar acceso denegado
+    else Tutor asignado
+        A->>DB: Guardar revisión
+        DB-->>A: Revisión registrada
+        A->>M: Notificar al estudiante
+        M-->>A: Envío aceptado
+        A-->>W: 201 Created
+        W-->>T: Mostrar confirmación
     end
     deactivate A
 ```
