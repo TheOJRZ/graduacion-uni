@@ -75,7 +75,39 @@ C4Container
 
 ### Diagramas de secuencia
 
-_Pendiente._
+## Registrar propuesta de proyecto
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor E as Estudiante
+    participant W as Aplicación Web
+    participant A as API REST
+    participant DB as SQL Server
+    participant F as Gestor de Documentos
+
+    E->>W: Completa formulario de propuesta y adjunta documento
+    W->>A: POST /api/projects (Bearer token)
+    activate A
+    A->>A: Validar token, DTO y reglas de negocio
+    alt Token inválido o vencido
+        A-->>W: 401 Unauthorized
+        W-->>E: Solicitar iniciar sesión de nuevo
+    else Datos inválidos
+        A-->>W: 400 Bad Request + errores
+        W-->>E: Mostrar errores en el formulario
+    else Datos válidos
+        A->>DB: Crear proyecto (estado = Propuesta)
+        DB-->>A: Id del proyecto
+        A->>F: Guardar documento
+        F-->>A: URL / Id del documento
+        A->>DB: Asociar documento al proyecto
+        DB-->>A: Confirmación
+        A-->>W: 201 Created + proyecto
+        W-->>E: Mostrar número de proyecto
+    end
+    deactivate A
+```
 
 ## API principal
 
